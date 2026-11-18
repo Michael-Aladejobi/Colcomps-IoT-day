@@ -1,179 +1,283 @@
-# Colcomps-IoT-day
-
-This is the perfect final project. It takes them from "I made a light blink" to **"I built a Smart Home device controlled from my phone."** It uses the built-in WiFi of the ESP8266 (which is why that board is so special) and gives them a massive "wow" moment.
-
-Here is the complete, highly professional documentation and the "copy-paste" code for the **Smart Traffic Light Web Server**.
-
-I have written this so it can be added directly as **Section 8** (before your Troubleshooting Guide) or as a standalone **Bonus Project** handout.
+Here is the complete, professional, and fun `README.md` for your project. It is written to be pasted directly into GitHub, GitLab, or any markdown viewer. It covers both the Web-Controlled Smart Home and the Ultrasonic Parking Sensor. 
 
 ***
 
-# SECTION 8: THE SMART TRAFFIC LIGHT (WiFi Web Control)
+# 🚀 COLCOMPS IoT Day 2026: Smart Home & Parking Automation
 
-**The Scenario:** 
-You are a smart city engineer. You don't want to stand in the rain to change the traffic lights. You want to control the Red, Yellow, and Green lights from your phone using a beautiful web interface over WiFi. 
+Welcome to the official repository for the **COLCOMPS IoT Day 2026** practical projects! 
 
-In this project, we will turn your ESP8266 into a **WiFi Web Server**. Your phone will connect to the ESP8266, open a web page, and you will click buttons to control the LEDs.
+This repository contains two complete projects designed for absolute beginners. By following this guide, you will transform a simple ESP8266 microcontroller into a **WiFi-controlled Smart Home** and a **Physical World Parking Sensor**.
 
-### 🛠️ What You Need
-*   ESP8266 Board (connected to your laptop via USB)
-*   Your existing 3-LED Traffic Light circuit (Red on D1, Yellow on D2, Green on D3)
-*   Your phone (to connect to the WiFi and control the lights)
-
-> ⚠️ **Important:** Make sure your Red LED is on **D1**, Yellow on **D2**, Green on **D3**, and all are connected to GND via resistors.
+*Learn | Build | Innovate!*
 
 ---
 
-### Step 1: The Code (Copy & Paste)
-The ESP8266 is special because it has built-in WiFi. The code below does three things:
-1.  It creates its own WiFi network (called an Access Point).
-2.  It hosts a beautiful web page with 4 buttons (Red, Yellow, Green, and All Off).
-3.  It listens for your button presses and turns the correct LED on.
+## 🛠️ Hardware Requirements
+For both projects, you will need the components from your training kit:
+- 1x ESP8266 (NodeMCU) Development Board
+- 1x Breadboard (MB102)
+- 3x LEDs (Red, Yellow, Green)
+- 1x Active Buzzer Module
+- 1x HC-SR04 Ultrasonic Sensor
+- Resistors (220Ω or 330Ω)
+- Jumper Wires (Male-to-Male)
+- USB Data Cable
 
-Copy and paste this entire block into your Arduino IDE:
+---
+
+# Project 1: Smart Home Controller (WiFi Web Server)
+
+### 📖 Overview
+This project turns the ESP8266 into a **local WiFi Access Point**. You will be able to connect your phone to the ESP8266 and use a beautiful, clean web dashboard to control the LEDs and the Buzzer independently, or all at once.
+
+### 🔌 Wiring Guide
+| Component | ESP8266 Pin | Notes |
+| :--- | :--- | :--- |
+| **Red LED** | D1 | Positive leg (via resistor). Negative to GND. |
+| **Yellow LED** | D2 | Positive leg (via resistor). Negative to GND. |
+| **Green LED** | D3 | Positive leg (via resistor). Negative to GND. |
+| **Buzzer** | D5 | Signal pin. VCC to 3V3, GND to GND. |
+
+### 💻 The Code
+Copy and paste the code below into your Arduino IDE and upload it to your ESP8266.
 
 ```cpp
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
 // --- WiFi Settings ---
-const char* ssid = "Smart_Traffic_Light";  // The WiFi name your phone will see
-const char* password = "password123";      // The WiFi password
+const char* ssid = "Smart_Home_Automation";  
+const char* password = "password123";      
 
 // --- Pin Definitions ---
 #define RED_LED D1
 #define YELLOW_LED D2
 #define GREEN_LED D3
+#define BUZZER D5
 
-// Create the web server on port 80
 ESP8266WebServer server(80);
 
-// --- The Beautiful Web Page (HTML & CSS) ---
-// This is the page that will load on your phone.
+// --- State Variables ---
+bool redState = false;
+bool yellowState = false;
+bool greenState = false;
+bool buzzerState = false;
+
+// --- Elegant, Self-Contained UI ---
 String getHTML() {
-  String html = "<!DOCTYPE html><html>";
-  html += "<head><meta name='viewport' content='width=device-width, initial-scale=1'>";
+  String html = "<!DOCTYPE html><html><head>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
   html += "<style>";
-  html += "body { font-family: Arial, sans-serif; text-align: center; background-color: #1e1e2f; color: white; margin-top: 50px; }";
-  html += "h1 { color: #00d2ff; }";
-  html += ".btn { border: none; color: white; padding: 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 18px; margin: 10px; border-radius: 12px; cursor: pointer; width: 80%; max-width: 300px; font-weight: bold; transition: 0.3s; }";
-  html += ".red { background-color: #ff4c4c; } .red:hover { background-color: #ff0000; }";
-  html += ".yellow { background-color: #ffcc00; color: black; } .yellow:hover { background-color: #ffb300; }";
-  html += ".green { background-color: #4caf50; } .green:hover { background-color: #00ff00; }";
-  html += ".off { background-color: #555; } .off:hover { background-color: #777; }";
+  html += "body { font-family: Arial, sans-serif; background-color: #f4f7f6; text-align: center; margin: 0; padding: 20px; color: #333; }";
+  html += "h1 { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }";
+  html += "p { color: #7f8c8d; font-size: 14px; margin-bottom: 30px; }";
+  html += ".grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; max-width: 400px; margin: 0 auto; }";
+  html += ".btn { width: 150px; height: 120px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }";
+  html += ".btn:active { transform: scale(0.95); }";
+  html += ".red { background-color: #e74c3c; } .red.off { background-color: #bdc3c7; color: #7f8c8d; }";
+  html += ".yellow { background-color: #f1c40f; color: #333; } .yellow.off { background-color: #bdc3c7; color: #7f8c8d; }";
+  html += ".green { background-color: #2ecc71; } .green.off { background-color: #bdc3c7; color: #7f8c8d; }";
+  html += ".purple { background-color: #9b59b6; } .purple.off { background-color: #bdc3c7; color: #7f8c8d; }";
+  html += ".master-container { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; align-items: center; }";
+  html += ".master-btn { width: 100%; max-width: 315px; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; }";
+  html += ".all-on { background-color: #34495e; } .all-off { background-color: #95a5a6; }";
+  html += ".status { margin-top: 8px; font-size: 14px; font-weight: normal; }";
   html += "</style></head>";
+
   html += "<body>";
-  html += "<h1>COLCOMPS IoT Day 2026</h1>";
-  html += "<h2>Smart Traffic Light</h2>";
-  html += "<p>Tap a button to control the lights!</p>";
+  html += "<h1>Smart Home Controller</h1>";
+  html += "<p>COLCOMPS IoT Day 2026</p>";
   
-  // The Buttons
-  html += "<button class='btn red' onclick=\"fetch('/red')\">Turn RED ON</button><br>";
-  html += "<button class='btn yellow' onclick=\"fetch('/yellow')\">Turn YELLOW ON</button><br>";
-  html += "<button class='btn green' onclick=\"fetch('/green')\">Turn GREEN ON</button><br>";
-  html += "<button class='btn off' onclick=\"fetch('/off')\">ALL OFF</button>";
+  html += "<div class='grid'>";
+  html += "<button class='btn red " + String(redState ? "" : "off") + "' onclick=\"fetch('/toggle_red').then(() => location.reload())\">";
+  html += "RED LED<span class='status'>" + String(redState ? "ON" : "OFF") + "</span></button>";
   
+  html += "<button class='btn yellow " + String(yellowState ? "" : "off") + "' onclick=\"fetch('/toggle_yellow').then(() => location.reload())\">";
+  html += "YELLOW LED<span class='status'>" + String(yellowState ? "ON" : "OFF") + "</span></button>";
+
+  html += "<button class='btn green " + String(greenState ? "" : "off") + "' onclick=\"fetch('/toggle_green').then(() => location.reload())\">";
+  html += "GREEN LED<span class='status'>" + String(greenState ? "ON" : "OFF") + "</span></button>";
+
+  html += "<button class='btn purple " + String(buzzerState ? "" : "off") + "' onclick=\"fetch('/toggle_buzzer').then(() => location.reload())\">";
+  html += "ALARM<span class='status'>" + String(buzzerState ? "ON" : "OFF") + "</span></button>";
+  
+  html += "</div>"; 
+
+  html += "<div class='master-container'>";
+  html += "<button class='master-btn all-on' onclick=\"fetch('/all_on').then(() => location.reload())\">TURN ALL ON</button>";
+  html += "<button class='master-btn all-off' onclick=\"fetch('/all_off').then(() => location.reload())\">TURN ALL OFF</button>";
+  html += "</div>";
+
   html += "</body></html>";
   return html;
 }
 
-// --- Functions to Control the LEDs ---
-void turnOffAll() {
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(YELLOW_LED, LOW);
-  digitalWrite(GREEN_LED, LOW);
+// --- Hardware Control Functions ---
+void updateHardware() {
+  digitalWrite(RED_LED, redState ? HIGH : LOW);
+  digitalWrite(YELLOW_LED, yellowState ? HIGH : LOW);
+  digitalWrite(GREEN_LED, greenState ? HIGH : LOW);
+  digitalWrite(BUZZER, buzzerState ? HIGH : LOW);
 }
 
-void handleRed() {
-  turnOffAll();
-  digitalWrite(RED_LED, HIGH);
-  server.send(200, "text/html", getHTML());
+void handleToggleRed()    { redState = !redState; updateHardware(); server.send(200, "text/plain", "OK"); }
+void handleToggleYellow() { yellowState = !yellowState; updateHardware(); server.send(200, "text/plain", "OK"); }
+void handleToggleGreen()  { greenState = !greenState; updateHardware(); server.send(200, "text/plain", "OK"); }
+void handleToggleBuzzer() { buzzerState = !buzzerState; updateHardware(); server.send(200, "text/plain", "OK"); }
+
+void handleAllOn() {
+  redState = true; yellowState = true; greenState = true; buzzerState = true;
+  updateHardware();
+  server.send(200, "text/plain", "OK");
 }
 
-void handleYellow() {
-  turnOffAll();
-  digitalWrite(YELLOW_LED, HIGH);
-  server.send(200, "text/html", getHTML());
-}
-
-void handleGreen() {
-  turnOffAll();
-  digitalWrite(GREEN_LED, HIGH);
-  server.send(200, "text/html", getHTML());
-}
-
-void handleOff() {
-  turnOffAll();
-  server.send(200, "text/html", getHTML());
+void handleAllOff() {
+  redState = false; yellowState = false; greenState = false; buzzerState = false;
+  updateHardware();
+  server.send(200, "text/plain", "OK");
 }
 
 void handleRoot() {
   server.send(200, "text/html", getHTML());
 }
 
-// --- Setup ---
 void setup() {
   Serial.begin(115200);
   
-  // Set pins as outputs
   pinMode(RED_LED, OUTPUT);
   pinMode(YELLOW_LED, OUTPUT);
   pinMode(GREEN_LED, OUTPUT);
-  turnOffAll();
+  pinMode(BUZZER, OUTPUT);
+  
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(YELLOW_LED, LOW);
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(BUZZER, LOW);
 
-  // Start the WiFi Access Point
-  Serial.println("Setting up WiFi...");
   WiFi.softAP(ssid, password);
   
-  Serial.print("WiFi Created! Connect your phone to: ");
-  Serial.println(ssid);
-  Serial.print("Open your browser and go to: ");
-  Serial.println(WiFi.softAPIP()); // This prints the IP address (usually 192.168.4.1)
+  Serial.println("Web Server Started!");
+  Serial.print("Connect to WiFi: "); Serial.println(ssid);
+  Serial.print("Open Browser to: "); Serial.println(WiFi.softAPIP()); 
 
-  // Link the web addresses to the functions
   server.on("/", handleRoot);
-  server.on("/red", handleRed);
-  server.on("/yellow", handleYellow);
-  server.on("/green", handleGreen);
-  server.on("/off", handleOff);
+  server.on("/toggle_red", handleToggleRed);
+  server.on("/toggle_yellow", handleToggleYellow);
+  server.on("/toggle_green", handleToggleGreen);
+  server.on("/toggle_buzzer", handleToggleBuzzer);
+  server.on("/all_on", handleAllOn);
+  server.on("/all_off", handleAllOff);
 
   server.begin();
-  Serial.println("Web Server Started!");
 }
 
-// --- Loop ---
 void loop() {
-  server.handleClient(); // Listen for phone requests
+  server.handleClient(); 
 }
 ```
 
----
-
-### Step 2: Upload the Code
-1.  Ensure your board is selected (NodeMCU 1.0) and the correct COM port is selected.
-2.  Click the **Upload** button.
-3.  Wait for the word "Done uploading" in the console.
-
----
-
-### Step 3: Connect and Control (The Magic Moment!)
-1.  Once uploaded, open the **Serial Monitor** (magnifying glass icon, baud rate 115200). You should see a message saying:
-    `WiFi Created! Connect your phone to: Smart_Traffic_Light`
-2.  Take your smartphone and open **WiFi Settings**.
-3.  Look for the network named **`Smart_Traffic_Light`** and connect to it. 
-    *   *Password:* `password123`
-    *   *(Note: Your phone might say "No Internet Connection." This is normal! Ignore it and stay connected to this WiFi).*
-4.  Open your phone's web browser (Safari or Chrome).
-5.  In the address bar, type the IP address shown in your Serial Monitor. It is usually: **`192.168.4.1`**
-6.  Press Enter.
-
-**🎉 BOOM!** You should see a beautiful dark-themed web page with buttons. Tap **"Turn RED ON"**, and watch your LED light up instantly. Tap "Turn GREEN ON", and the red light switches off while the green light comes on. 
-
-You have just built a remote-controlled IoT system. No internet required—it's a local network!
+### 🚀 How to Run It
+1. Upload the code to your ESP8266.
+2. Open the **Serial Monitor** (115200 baud). You will see the WiFi name and the IP address (usually `192.168.4.1`).
+3. On your smartphone, go to WiFi settings and connect to **`Smart_Home_Automation`** (Password: `password123`). *Note: Your phone may say "No Internet Connection." That is normal!*
+4. Open your phone's web browser and type `192.168.4.1` into the address bar.
+5. Tap the buttons to control the lights and the alarm!
 
 ---
 
-### 🚀 How this relates to the real world:
-This exact logic is how smart home devices work. When you buy a smart bulb (like Tuya or Philips Hue), it has a tiny microcontroller (like the ESP8266) inside it. It creates a small web server, and the app on your phone sends HTTP requests (`/red`, `/green`) to turn the lights on and off. 
+# Project 2: Smart Parking Sensor (Ultrasonic + Alarm)
 
-You are now an official IoT developer. **Learn | Build | Innovate!**
+### 📡 Overview
+This project uses an **HC-SR04 Ultrasonic Sensor** to measure distance. Imagine a car trying to park; if it gets too close to the wall, the system triggers a Red LED and a Buzzer alarm. 
+
+### 🔌 Wiring Guide
+| Component | ESP8266 Pin | Notes |
+| :--- | :--- | :--- |
+| **Ultrasonic VCC** | 3V3 | Power for the sensor |
+| **Ultrasonic GND** | GND | Ground |
+| **Ultrasonic Trig** | D5 | Sends the sound pulse |
+| **Ultrasonic Echo** | D6 | Listens for the bounce back |
+| **Red LED** | D1 | Positive leg (via resistor). Negative to GND. |
+| **Buzzer** | D2 | Signal pin. VCC to 3V3, GND to GND. |
+
+### 💻 The Code
+*(Copy and paste this into a new Arduino sketch)*
+
+```cpp
+// --- Pin Definitions ---
+#define TRIG_PIN D5
+#define ECHO_PIN D6
+#define RED_LED D1
+#define BUZZER D2
+
+void setup() {
+  Serial.begin(115200);
+  
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(BUZZER, LOW);
+  
+  Serial.println("Smart Parking System Initialized!");
+}
+
+void loop() {
+  // 1. Send an ultrasonic pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  // 2. Read the echo
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  
+  // 3. Calculate distance in centimeters
+  int distance = duration * 0.034 / 2;
+  
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // 4. Logic: If object is closer than 20cm, trigger alarm
+  if (distance > 0 && distance < 20) {
+    Serial.println("⚠️ ALERT: Object Detected Too Close!");
+    digitalWrite(RED_LED, HIGH);
+    digitalWrite(BUZZER, HIGH);
+  } else {
+    digitalWrite(RED_LED, LOW);
+    digitalWrite(BUZZER, LOW);
+  }
+  
+  delay(200); // Small delay between readings
+}
+```
+
+### 🧪 How to Test It
+1. Upload the code and open the **Serial Monitor** (115200 baud).
+2. Place your hand in front of the two silver cylinders (the ultrasonic sensor).
+3. Move your hand closer until it is less than 20cm away. The Red LED should turn on, and the buzzer should sound!
+4. Move your hand away, and the alarm will stop.
+
+---
+
+## 🚀 Final Challenge for Students
+Can you combine both projects? 
+- Add a "Disable Alarm" button to the Web Server UI. 
+- If the Ultrasonic sensor detects an object, the ESP8266 should send an alert to the web page.
+
+---
+
+## 👨‍🏫 Contact & Resources
+**Facilitator:** Mike
+**Website:** [https://mike.innopavetech.com](https://mike.innopavetech.com)
+
+**Free IoT Resources:** 
+Continue your learning journey with free IoT courses and tutorials at:
+🌐 [https://www.innopavetech.com/courses/iot](https://www.innopavetech.com/courses/iot)
+
+*Thank you for participating in COLCOMPS IoT Day 2026.*
+**Learn | Build | Innovate!**
