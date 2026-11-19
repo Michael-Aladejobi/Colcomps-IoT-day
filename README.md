@@ -1,4 +1,3 @@
-Here is the complete, professional, and fun `README.md` for your project. It is written to be pasted directly into GitHub, GitLab, or any markdown viewer. It covers both the Web-Controlled Smart Home and the Ultrasonic Parking Sensor. 
 
 ***
 
